@@ -1,0 +1,1208 @@
+<!--
+  CAPABILITY RESILIENCE MAP
+  ═══════════════════════════════════════════════════════════════
+  HOW TO EMBED IN A MEDIUM ARTICLE
+  ─────────────────────────────────
+  1. Host this single file on a static platform:
+     • GitHub Pages: commit to a repo, enable Pages in Settings → Pages
+     • Netlify Drop: drag this file to app.netlify.com/drop
+     • Vercel: run `npx vercel --prod` in the folder containing this file
+
+  2. Copy the public URL of the hosted file (e.g. https://yoursite.netlify.app/capability-resilience-map.html)
+
+  3. In your Medium draft, create a new paragraph, paste the URL on its own
+     line, and press Enter. Medium will auto-embed it as an iframe.
+
+  Recommended iframe dimensions: 100% width, ~900px height.
+  The map is responsive down to 480px.
+  ═══════════════════════════════════════════════════════════════
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capability Resilience Map</title>
+<style>
+  /* ── DESIGN TOKENS ─────────────────────────────────────────── */
+  :root {
+    --bg:            #0f0f0f;
+    --surface:       #1a1a1a;
+    --border:        #2a2a2a;
+    --text:          #e5e5e5;
+    --text-muted:    #888888;
+    --text-dim:      #555555;
+
+    /* Tile heat backgrounds — each step is deliberately distinct */
+    --heat-0-bg:     #1c1c1c;
+    --heat-1-bg:     #173320;
+    --heat-2-bg:     #2c1f00;
+    --heat-3-bg:     #3a1010;
+    --heat-4-bg:     #620c0c;
+
+    /* Tile heat text accents */
+    --heat-0-accent: #555555;
+    --heat-1-accent: #52c47a;
+    --heat-2-accent: #e0a820;
+    --heat-3-accent: #d94444;
+    --heat-4-accent: #ff5555;
+
+    /* Tile heat left-border accents (subtle colour stripe) */
+    --heat-0-stripe: #2a2a2a;
+    --heat-1-stripe: #2a6640;
+    --heat-2-stripe: #7a5000;
+    --heat-3-stripe: #882020;
+    --heat-4-stripe: #cc2222;
+
+    /* Scenario identity colours */
+    --s0-color: #6b7280;
+    --s1-color: #f59e0b;
+    --s2-color: #3b82f6;
+    --s3-color: #a78bfa;
+    --s4-color: #22d3ee;
+
+    /* Investment badge colours */
+    --invest-high-bg:   #0f2e0f;
+    --invest-high-text: #4ade80;
+    --invest-mid-bg:    #2e1f00;
+    --invest-mid-text:  #fbbf24;
+    --invest-low-bg:    #2e0f0f;
+    --invest-low-text:  #f87171;
+
+    --tile-border-standard:      1px solid #2a2a2a;
+    --tile-border-differentiating: 2px solid #3a3a3a;
+    --tile-radius: 6px;
+    --tile-padding: 10px 12px;
+    --transition: background-color 0.25s ease, border-color 0.25s ease;
+
+    --group-gap: 8px;
+    --map-gap:   8px;
+  }
+
+  /* ── RESET & BASE ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 16px 16px 24px;
+    min-height: 100vh;
+  }
+
+  /* ── PAGE HEADER ─────────────────────────────────────────────── */
+  .page-header {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #1e1e1e;
+  }
+  .page-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.01em;
+    margin-bottom: 2px;
+  }
+  .page-subtitle {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  /* ── SCENARIO PILLS ─────────────────────────────────────────── */
+  .scenario-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .scenario-pill {
+    cursor: pointer;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: var(--text-muted);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .scenario-pill:hover { color: var(--text); border-color: #555; }
+  .scenario-pill.active {
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* ── SCENARIO DESCRIPTION ────────────────────────────────────── */
+  .scenario-desc {
+    background: #151515;
+    border-left: 3px solid var(--s0-color);
+    border-radius: 0 4px 4px 0;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: #bbb;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+
+  /* ── MAP LAYOUT ──────────────────────────────────────────────── */
+  .map-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .map-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 1fr;        /* equal-height tiles in each row */
+    gap: var(--map-gap);
+    margin-bottom: var(--map-gap);
+  }
+
+  /* Domain groups in 2x2 grid */
+  .domain-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--map-gap);
+    margin-bottom: var(--map-gap);
+  }
+
+  .domain-group {
+    background: #131313;
+    border: 1px solid #202020;
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .domain-group-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4a4a4a;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+
+  .domain-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;        /* equal-height tiles within each group */
+    gap: 6px;
+  }
+
+  /* ── TILE ────────────────────────────────────────────────────── */
+  .tile {
+    position: relative;
+    border-radius: var(--tile-radius);
+    padding: var(--tile-padding);
+    padding-left: 14px;         /* room for the heat stripe */
+    cursor: pointer;
+    transition: var(--transition);
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: var(--tile-border-standard);
+    /* Left colour stripe encodes heat level */
+    border-left: 3px solid var(--heat-0-stripe);
+  }
+  .tile.differentiating {
+    border: var(--tile-border-differentiating);
+    border-left: 3px solid var(--heat-0-stripe);
+  }
+  .tile:hover { filter: brightness(1.18); }
+  .tile.active-tile {
+    outline: 2px solid rgba(255,255,255,0.22);
+    outline-offset: 2px;
+  }
+
+  /* Heat backgrounds + left stripe applied via JS data attribute */
+  .tile[data-heat="0"] { background: var(--heat-0-bg); border-left-color: var(--heat-0-stripe); }
+  .tile[data-heat="1"] { background: var(--heat-1-bg); border-left-color: var(--heat-1-stripe); }
+  .tile[data-heat="2"] { background: var(--heat-2-bg); border-left-color: var(--heat-2-stripe); }
+  .tile[data-heat="3"] { background: var(--heat-3-bg); border-left-color: var(--heat-3-stripe); }
+  .tile[data-heat="4"] { background: var(--heat-4-bg); border-left-color: var(--heat-4-stripe); }
+
+  /* Keep differentiating tiles' thicker right/top/bottom border but stripe on left */
+  .tile.differentiating[data-heat="0"] { border-left-color: var(--heat-0-stripe); }
+  .tile.differentiating[data-heat="1"] { border-left-color: var(--heat-1-stripe); }
+  .tile.differentiating[data-heat="2"] { border-left-color: var(--heat-2-stripe); }
+  .tile.differentiating[data-heat="3"] { border-left-color: var(--heat-3-stripe); }
+  .tile.differentiating[data-heat="4"] { border-left-color: var(--heat-4-stripe); }
+
+  /* Critical tiles (score 4) get an additional top border flash to be unmistakeable */
+  .tile[data-heat="4"] {
+    border-top-color: #cc222244;
+  }
+  .tile.differentiating[data-heat="4"] {
+    border-top-color: #cc222266;
+  }
+
+  .tile-name {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.35;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .tile-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .invest-badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+  .invest-badge.high { background: var(--invest-high-bg); color: var(--invest-high-text); }
+  .invest-badge.mid  { background: var(--invest-mid-bg);  color: var(--invest-mid-text);  }
+  .invest-badge.low  { background: var(--invest-low-bg);  color: var(--invest-low-text);  }
+
+  /* Changed indicator dot — sits on the left stripe */
+  .changed-dot {
+    position: absolute;
+    top: 7px;
+    left: -5px;               /* overlaps the stripe for emphasis */
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1.5px solid #0f0f0f;
+    display: none;
+    z-index: 1;
+  }
+  .changed-dot.visible { display: block; }
+
+  /* ── DETAIL DRAWER ───────────────────────────────────────────── */
+  .drawer {
+    display: none;
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-left: 4px solid #333;  /* overridden by JS with heat accent */
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-top: 10px;
+  }
+  .drawer.open { display: block; }
+
+  .drawer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .drawer-meta {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .drawer-scenario-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .drawer-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .drawer-right {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .drawer-exposure {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 3px 10px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+
+  .drawer-close {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+    padding: 2px 4px;
+    margin-top: 1px;
+  }
+  .drawer-close:hover { color: var(--text); }
+
+  .drawer-explanation {
+    font-size: 13px;
+    color: #c8c8c8;
+    line-height: 1.7;
+    border-top: 1px solid #222;
+    padding-top: 12px;
+  }
+
+  /* ── LEGEND ──────────────────────────────────────────────────── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #222;
+    align-items: center;
+  }
+
+  .legend-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .legend-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  .legend-swatch {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    border-left: 3px solid transparent; /* mirrors tile stripe */
+  }
+  /* Give legend swatches their stripe colours too */
+  .legend-swatch[data-heat="0"] { background:var(--heat-0-bg); border-left-color:var(--heat-0-stripe); }
+  .legend-swatch[data-heat="1"] { background:var(--heat-1-bg); border-left-color:var(--heat-1-stripe); }
+  .legend-swatch[data-heat="2"] { background:var(--heat-2-bg); border-left-color:var(--heat-2-stripe); }
+  .legend-swatch[data-heat="3"] { background:var(--heat-3-bg); border-left-color:var(--heat-3-stripe); }
+  .legend-swatch[data-heat="4"] { background:var(--heat-4-bg); border-left-color:var(--heat-4-stripe); }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    flex-shrink: 0;
+  }
+
+  .legend-border-std {
+    width: 24px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid #3a3a3a;
+    background: transparent;
+  }
+
+  .legend-border-diff {
+    width: 24px;
+    height: 14px;
+    border-radius: 3px;
+    border: 2px solid #5a5a5a;
+    background: transparent;
+  }
+
+  /* ── RESPONSIVE ──────────────────────────────────────────────── */
+
+  /* Tablet / narrow desktop — domain groups stack 1 column */
+  @media (max-width: 640px) {
+    .domain-grid { grid-template-columns: 1fr; }
+    /* Governance & enabling: 3+2 layout avoids orphaned single tile */
+    .map-row { grid-template-columns: repeat(3, 1fr); }
+    .tile-name { font-size: 11px; }
+    .domain-group-label { font-size: 9px; }
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    body { padding: 10px 10px 20px; }
+    /* 3-column keeps governance/enabling at 3+2, avoiding a single orphan */
+    .map-row { grid-template-columns: repeat(3, 1fr); }
+    .domain-tiles { grid-template-columns: 1fr 1fr; } /* keep 2-col inside groups */
+    .scenario-pill { font-size: 11px; padding: 4px 10px; }
+    .tile { min-height: 64px; }
+    .tile-name { font-size: 10.5px; }
+    .page-title { font-size: 13px; }
+  }
+
+  /* Very small — below 380px, go 2-column and let tiles shrink */
+  @media (max-width: 380px) {
+    .map-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Page header -->
+<div class="page-header">
+  <div class="page-title">Capability Resilience Map</div>
+  <div class="page-subtitle">Select a scenario to reveal exposure across business capabilities — click any tile to read the analysis</div>
+</div>
+
+<!-- Scenario selector -->
+<div class="scenario-bar" id="scenario-bar"></div>
+
+<!-- Scenario description -->
+<div class="scenario-desc" id="scenario-desc"></div>
+
+<!-- Map -->
+<div id="map">
+
+  <div class="map-section-label">Governance &amp; Direction</div>
+  <div class="map-row" id="row-governance"></div>
+
+  <div class="map-section-label">Business Domains</div>
+  <div class="domain-grid" id="domain-grid"></div>
+
+  <div class="map-section-label">Enabling Capabilities</div>
+  <div class="map-row" id="row-enabling"></div>
+
+</div>
+
+<!-- Detail drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-meta">
+      <div class="drawer-scenario-label" id="drawer-scenario-label"></div>
+      <div class="drawer-name" id="drawer-name"></div>
+    </div>
+    <div class="drawer-right">
+      <div class="drawer-exposure" id="drawer-exposure"></div>
+      <div class="drawer-close" id="drawer-close">✕</div>
+    </div>
+  </div>
+  <div class="drawer-explanation" id="drawer-explanation"></div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-group">
+    <span class="legend-label">Exposure</span>
+    <div class="legend-item"><div class="legend-swatch" data-heat="0"></div> Not exposed</div>
+    <div class="legend-item"><div class="legend-swatch" data-heat="1"></div> Low</div>
+    <div class="legend-item"><div class="legend-swatch" data-heat="2"></div> Moderate</div>
+    <div class="legend-item"><div class="legend-swatch" data-heat="3"></div> High</div>
+    <div class="legend-item"><div class="legend-swatch" data-heat="4"></div> Critical</div>
+  </div>
+  <div class="legend-group">
+    <span class="legend-label">Markers</span>
+    <div class="legend-item"><div class="legend-dot"></div> Changed vs. baseline</div>
+    <div class="legend-item"><div class="legend-border-diff"></div> Differentiating</div>
+    <div class="legend-item"><div class="legend-border-std"></div> Standard</div>
+  </div>
+  <div class="legend-group">
+    <span class="legend-label">Investment</span>
+    <div class="legend-item"><span class="invest-badge high">High</span></div>
+    <div class="legend-item"><span class="invest-badge mid">Mid</span></div>
+    <div class="legend-item"><span class="invest-badge low">Low</span> = underfunded risk</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA — edit this section to update scenarios, scores, or text
+   ═══════════════════════════════════════════════════════════════ */
+
+const SCENARIOS = [
+  {
+    id: 0,
+    name: 'Baseline',
+    color: '#6b7280',
+    description: 'Current state, no external shock applied. This view surfaces known performance gaps and structural fragilities that exist regardless of what the future holds — capabilities receiving too little investment, processes that live in individuals rather than systems, and functions that have never been tested under pressure. This is where honest conversations about chronic underperformance begin.'
+  },
+  {
+    id: 1,
+    name: 'Energy Scarcity',
+    color: '#f59e0b',
+    description: 'An oil price shock sends energy costs spiking across the economy. Fuel-intensive logistics, climate-controlled storage, and energy-hungry production lines become expensive to operate — or impossible to operate at full capacity. Capabilities built on the assumption that energy is cheap and always available reveal their fragility. Manual fallback procedures that were eliminated during efficiency drives become critical gaps.'
+  },
+  {
+    id: 2,
+    name: 'Supply Chain Fragmentation',
+    color: '#3b82f6',
+    description: 'Geopolitical decoupling accelerates, splitting global trade into regional blocs. Single-vendor dependencies, single-region sourcing, and any capability with no visibility below its immediate supplier become acutely exposed. Cross-border transactions face new friction, compliance, and delay. Relationships built over decades in now-adversarial regions must be rebuilt from scratch.'
+  },
+  {
+    id: 3,
+    name: 'Talent Erosion',
+    color: '#a78bfa',
+    description: 'A retirement wave and a widening skills cliff collide simultaneously. Capabilities that exist in the heads of long-tenured employees — rather than in documented processes, recorded playbooks, or transferable systems — begin to fail as those people leave. Undocumented institutional knowledge, absent succession plans, and tribal sales or R&D methodology become critical vulnerabilities within a two-to-three-year window.'
+  },
+  {
+    id: 4,
+    name: 'Automation Lock-in',
+    color: '#22d3ee',
+    description: 'The organisation discovers that a decade of digitalisation has removed its ability to operate or change many capabilities manually. When platforms break, pivot, or price-gouge, there is no fallback. When the business model must adapt quickly, the automation layers are too rigid to follow. The primary risk dimension here is reversibility: capabilities that cannot be run differently, cannot be changed cheaply, and cannot be handed back to people when needed.'
+  }
+];
+
+/* Exposure score meanings: 0=not exposed, 1=low, 2=moderate, 3=high, 4=critical
+   Each scenario array index matches the scenario id above.
+   Format: { score, explanation }                                                  */
+
+const CAPABILITIES = [
+  /* ──────────────────────── GOVERNANCE ROW ──────────────────── */
+  {
+    id: 'develop-strategy',
+    name: 'Develop strategy and ambitions',
+    group: 'governance',
+    investment: 'high',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Strategic planning is currently functional and reasonably well-resourced. The primary baseline risk is a tendency to anchor strategy to recent conditions rather than stress-testing it against discontinuous change. This is a latent fragility rather than an active one.' },
+      { score: 1, explanation: 'Strategy development itself is not energy-intensive. However, financial projections and investment theses embedded in the current strategy were calibrated to stable energy costs. A sustained energy shock may render the existing strategic plan materially incorrect, requiring a resource-intensive re-planning cycle.' },
+      { score: 2, explanation: 'Geopolitical decoupling fundamentally changes the strategic landscape — market access assumptions, partner viability, and growth vectors built into the current plan may no longer hold. The organisation will need to re-examine its strategic ambitions within a compressed timeframe, stressing planning resources.' },
+      { score: 2, explanation: 'If the leadership team responsible for strategy development is heavily weighted toward long-tenure executives approaching retirement, the loss of institutional strategic memory — the context behind past decisions — creates meaningful continuity risk. Strategy without organisational memory tends toward repetition of old mistakes.' },
+      { score: 1, explanation: 'Strategy formulation is inherently a human, deliberative process. It is not vulnerable to automation lock-in in the way operational capabilities are. The main risk is over-reliance on data tools that shape strategic analysis in ways the organisation no longer fully understands or can interrogate.' }
+    ]
+  },
+  {
+    id: 'plan-investments',
+    name: 'Plan investments to optimise the company',
+    group: 'governance',
+    investment: 'high',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Investment planning is currently adequately supported. The baseline risk is that planning cycles are too slow to respond to fast-moving competitive shifts, and that investment decisions rely on financial models that have not been validated against scenario stress conditions.' },
+      { score: 2, explanation: 'Energy cost volatility disrupts the financial assumptions underpinning most capital allocation models. Payback periods, operating cost projections, and ROI calculations for energy-intensive assets become unreliable. The organisation may find itself committed to investments that no longer make sense under a high-energy-cost regime.' },
+      { score: 2, explanation: 'Supply chain fragmentation forces a reallocation of capital — toward localisation, inventory buffers, and supplier diversification — at the expense of growth investment. Investment planning processes built for a stable trade environment are not equipped to rapidly re-optimise under these conditions.' },
+      { score: 2, explanation: 'Investment planning depends on accurate forecasting of both internal capability and market dynamics. If the people who understand those dynamics are retiring without transferring their judgment, investment decisions become less grounded. The risk is not catastrophic, but the quality of capital allocation degrades.' },
+      { score: 1, explanation: 'Investment planning is not significantly exposed to automation lock-in. The risk is indirect: if operational capabilities are locked into automated systems that are expensive to change, investment planning will consistently underestimate the true cost of transformation and over-allocate to maintenance rather than growth.' }
+    ]
+  },
+  {
+    id: 'health-safety',
+    name: 'Plan for health and safety of employees and customers',
+    group: 'governance',
+    investment: 'mid',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Health and safety planning is generally compliant and systematised. The baseline risk lies in procedures that have become checkbox exercises rather than lived practice — where the documentation exists but the operational discipline has quietly eroded, particularly in lower-visibility areas of the facility.' },
+      { score: 2, explanation: 'Energy disruption affects safety-critical systems directly: emergency lighting, climate control in sensitive areas, ventilation, and alarm systems all depend on reliable power. Where backup power is inadequate or untested, a prolonged energy disruption creates genuine safety exposure. H&S planning has likely not modelled extended low-power scenarios.' },
+      { score: 1, explanation: 'Supply chain fragmentation has limited direct impact on health and safety planning. An indirect risk arises if safety equipment or consumables are sourced from affected regions and supply becomes unreliable, but this is a manageable materials-sourcing issue rather than a capability-level exposure.' },
+      { score: 2, explanation: 'Health and safety knowledge — particularly in industrial or food-production environments — is disproportionately held by experienced employees who understand why procedures exist, not just what they require. As those employees retire, the institutional memory behind safety protocols can deteriorate, leaving newer staff following rules they do not fully understand.' },
+      { score: 2, explanation: 'Automated safety monitoring systems create a false sense of coverage. Where sensors and alerts have replaced physical inspection routines, the organisation may lose the ability to catch the safety issues that fall outside the sensor envelope. Manual inspection competence atrophies quietly until it is needed.' }
+    ]
+  },
+  {
+    id: 'legal',
+    name: 'Handle legal aspects of the company',
+    group: 'governance',
+    investment: 'mid',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Legal capability is functioning adequately. The baseline risk is slow responsiveness — legal review cycles that create bottlenecks in commercial deal-making — and a tendency to manage legal risk reactively rather than embedding it into operational processes from the start.' },
+      { score: 1, explanation: 'Energy scarcity has limited direct impact on legal capability. Contract terms related to force majeure, energy-indexed pricing clauses, and supplier agreements may need review under a sustained energy shock, but this is a routine legal workload increase rather than a capability failure.' },
+      { score: 3, explanation: 'Geopolitical decoupling dramatically increases legal complexity. Export controls, sanctions compliance, jurisdiction-specific data residency requirements, and the fragmentation of contract law across newly distinct trading blocs all create legal workload that the current team may not be sized or specialised to handle. Getting this wrong carries material commercial and regulatory risk.' },
+      { score: 2, explanation: 'Legal expertise is highly person-dependent. Institutional knowledge of prior contracts, dispute history, and regulatory relationships resides in specific individuals. When senior legal counsel retires, the organisation loses not just capacity but accumulated judgment that cannot be reconstructed quickly from documentation alone.' },
+      { score: 1, explanation: 'Legal processes have been only moderately automated — contract management tools and compliance trackers help but do not create meaningful lock-in. The main risk is that legal review steps in automated workflows become rubber stamps, losing genuine oversight function.' }
+    ]
+  },
+  {
+    id: 'bcp',
+    name: 'Business continuity planning',
+    group: 'governance',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: true,
+    scenarios: [
+      { score: 3, explanation: 'Business continuity planning is chronically underfunded and largely theoretical. Plans exist on paper but have rarely been tested against realistic disruption scenarios. The organisation has not rehearsed what it would actually do if a significant capability failed. This is a structural vulnerability that predates any external shock.' },
+      { score: 4, explanation: 'Energy scarcity is precisely the class of disruption that exposes untested business continuity plans. Extended power disruption, fuel rationing affecting logistics, and equipment shutdowns due to energy cost are all foreseeable but generally absent from BCP documentation. The organisation is likely to improvise, at cost, rather than execute a prepared response.' },
+      { score: 2, explanation: 'Supply chain fragmentation creates a disruption pattern — gradual erosion rather than sudden failure — that most BCP frameworks are not designed to handle. Plans tend to address acute shocks, not sustained degradation of supply relationships over months. This is a gap in how continuity is framed rather than in execution.' },
+      { score: 2, explanation: 'When the people who own and understand the business continuity plans retire, those plans lose their human context. BCP documents rarely capture the judgment calls and exception handling that experienced responders apply. The plan becomes a document without an interpreter.' },
+      { score: 3, explanation: 'Automation lock-in fundamentally changes the continuity picture: many manual fallback procedures assumed in legacy BCP documents no longer exist. If the primary digital systems fail, the workarounds written into the plan are no longer executable. The continuity plan has not been updated to reflect the elimination of manual alternatives.' }
+    ]
+  },
+
+  /* ────────────────────────── GROUP 1: MARKET & BRAND ─────────── */
+  {
+    id: 'brand-awareness',
+    name: 'Create brand awareness',
+    group: 'market',
+    investment: 'high',
+    differentiating: true,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Brand awareness capability is well-resourced and functioning. The baseline risk is over-investment in reach metrics at the expense of brand depth — awareness that does not translate to preference or loyalty when purchasing decisions become more considered.' },
+      { score: 1, explanation: 'Brand activity is not directly energy-intensive. An indirect effect may emerge if consumers become more price-sensitive under an energy shock, shifting attention toward value messaging. Brands positioned primarily on aspiration or premium attributes may see declining resonance without a message adjustment.' },
+      { score: 1, explanation: 'Brand awareness capability is largely domestic in execution and not significantly exposed to supply chain fragmentation. If media partners or production suppliers are affected by trade disruption, campaign timelines may be extended, but the core capability is not at risk.' },
+      { score: 2, explanation: 'Brand voice, visual identity standards, and the tacit understanding of what the brand stands for are often concentrated in a small number of long-tenure marketers. When those individuals leave, brand consistency tends to drift as newer team members make individually reasonable but collectively incoherent decisions.' },
+      { score: 2, explanation: 'Programmatic advertising and algorithm-driven content distribution have automated much of brand delivery. These systems optimise for measurable engagement metrics, which can gradually pull brand communication toward short-term performance at the expense of long-term brand equity. The organisation may have lost the ability to override the algorithm with human brand judgment.' }
+    ]
+  },
+  {
+    id: 'promotions',
+    name: 'Organise promotions and advertising',
+    group: 'market',
+    investment: 'high',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Promotions and advertising capability is well-resourced and operationally reliable. The baseline risk is a tendency toward promotional activity that erodes brand price positioning over time — volume-driving tactics that undermine the premium or trust signals the brand needs to sustain.' },
+      { score: 1, explanation: 'Advertising operations are not materially energy-sensitive. If economic pressure from energy costs reduces consumer discretionary spending, promotional strategy may need to shift toward value-led messaging, but this is a strategic adjustment rather than a capability failure.' },
+      { score: 1, explanation: 'Promotions capability has limited supply chain exposure. Some in-store promotional materials depend on print and physical distribution logistics, which may be affected by fragmentation, but digital promotion channels provide sufficient alternative reach.' },
+      { score: 2, explanation: 'Campaign planning and media buying involve significant institutional knowledge — historical performance data, agency relationships, and the contextual judgment about which promotional mechanics work for which product lines. This knowledge tends to sit with a small number of experienced marketers whose departure would reduce effectiveness noticeably.' },
+      { score: 2, explanation: 'Promotional activity is heavily automated through digital ad platforms, loyalty programme engines, and dynamic pricing tools. The organisation may have lost meaningful human oversight of how these systems are making trade-off decisions — accepting platform defaults rather than actively directing promotional strategy.' }
+    ]
+  },
+  {
+    id: 'customer-data',
+    name: 'Maintain customer and market data',
+    group: 'market',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: true,
+    scenarios: [
+      { score: 3, explanation: 'Customer and market data infrastructure is chronically underfunded relative to how much the organisation claims to rely on it. Data quality is inconsistent, integration across systems is incomplete, and the capability has never been systematically prioritised. Decisions made on unreliable data compound over time into strategic misjudgements.' },
+      { score: 1, explanation: 'Energy scarcity has minimal direct impact on data management capability. Cloud-hosted data infrastructure is resilient to local energy disruption. The indirect risk is that during a crisis, data maintenance activities — which are often seen as non-urgent — are deprioritised further, worsening the baseline data quality problem.' },
+      { score: 2, explanation: 'Geopolitical fragmentation creates data sovereignty complexity: customer data held in certain cloud regions may become subject to new regulatory requirements or access restrictions. Where data flows across newly regulated borders, compliance costs and operational friction increase.' },
+      { score: 2, explanation: 'Data governance — the understanding of what data exists, where it lives, what it means, and how to use it correctly — is typically concentrated in a small number of analysts and data engineers. Their departure leaves the organisation holding data it cannot effectively interpret or trust.' },
+      { score: 2, explanation: 'Customer data is now distributed across multiple platforms — CRM, e-commerce, loyalty, analytics, social — each with its own data model. The organisation may have lost the ability to construct a coherent, integrated view of the customer without vendor-specific tooling. Switching or adapting is far more difficult than it appears from the outside.' }
+    ]
+  },
+  {
+    id: 'partner-relations',
+    name: 'Establish relations with partners and corporates',
+    group: 'market',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 2, explanation: 'Partner relationship management is adequately executed but under-resourced relative to its strategic importance. Partnerships tend to be maintained by a small number of individuals, creating single points of relationship risk. The baseline risk is that partner value is not being systematically extracted or developed.' },
+      { score: 1, explanation: 'Energy scarcity does not significantly threaten partner relationships directly. If energy costs compress partner margins, some partnerships may become economically unviable, requiring renegotiation or replacement — but this is a manageable commercial process.' },
+      { score: 3, explanation: 'Geopolitical decoupling directly disrupts established partner and corporate relationships, particularly those spanning newly separated trading blocs. Preferred partners in certain regions may no longer be accessible or commercially viable. Building replacement relationships requires years of trust-building that cannot be accelerated. The organisation faces a relationship capital deficit it cannot quickly fill.' },
+      { score: 2, explanation: 'Corporate and partner relationships are highly person-dependent. Senior leaders who have cultivated multi-year relationships with key partners represent relationship capital that does not transfer automatically to their successors. When those leaders leave, partnership continuity depends on how well they have introduced their replacements.' },
+      { score: 1, explanation: 'Partner relationship management has not been significantly automated — it remains an interpersonal capability. CRM tools support but do not replace the human relationship dimension. This actually provides some resilience against automation lock-in, though it increases the talent dependency.' }
+    ]
+  },
+
+  /* ────────────────────────── GROUP 2: SUPPLY CHAIN ─────────── */
+  {
+    id: 'supplier-relations',
+    name: 'Establish relations with suppliers',
+    group: 'supply',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: true,
+    scenarios: [
+      { score: 3, explanation: 'Supplier relationship management is significantly underfunded. The organisation has limited visibility beyond its tier-1 suppliers, maintains single-source dependencies in several critical categories, and has not invested in the relationship depth needed to secure preferential treatment during supply tightness. This fragility is structural and predates any external shock.' },
+      { score: 2, explanation: 'Energy-driven cost increases threaten supplier viability, particularly for smaller suppliers with limited balance sheet resilience. Where the organisation has not invested in understanding its suppliers\' financial health, it may receive no warning before a critical supplier fails or significantly raises prices.' },
+      { score: 4, explanation: 'Geopolitical decoupling is the defining threat to supplier relationships. Single-region sourcing strategies, suppliers with concentrated geographic footprints, and relationships built on the assumption of open trade are all acutely exposed. Alternative supplier relationships that could take three to five years to build are suddenly needed immediately. This is the highest-severity exposure under this scenario.' },
+      { score: 2, explanation: 'Supplier relationships are maintained by individuals who have invested years in building trust with specific counterparts. When those individuals leave, the relationship essentially restarts. In commodity categories this is manageable; in specialised or constrained supply markets, the relationship is the competitive advantage.' },
+      { score: 1, explanation: 'Supplier relationship management remains a human capability and is not meaningfully vulnerable to automation lock-in. Automated procurement systems have standardised some interactions but have not replaced the strategic relationship management layer that matters most during supply disruption.' }
+    ]
+  },
+  {
+    id: 'timely-delivery',
+    name: 'Ensure timely delivery of materials',
+    group: 'supply',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 2, explanation: 'Materials delivery is currently adequate but operating with thin margins — minimal buffer stock, high dependence on just-in-time scheduling, and limited contingency routing. Any disruption to the current delivery rhythm creates immediate production impact because there is no meaningful inventory cushion.' },
+      { score: 3, explanation: 'Fuel cost spikes directly increase the cost of freight across all transport modes. Just-in-time delivery models, which depend on cheap and reliable transportation, become economically and operationally fragile under sustained energy price pressure. The organisation has no identified lower-frequency, higher-batch alternative that could absorb higher per-trip costs.' },
+      { score: 3, explanation: 'Supply chain fragmentation disrupts established freight routes, introduces new customs and compliance delays, and removes access to familiar logistics partners in affected regions. Where single-carrier contracts exist, losing that carrier creates a capability gap that cannot be filled quickly. The organisation cannot easily redirect to alternative routes or providers.' },
+      { score: 1, explanation: 'Timely delivery depends on logistics coordination skills that are operational rather than deeply knowledge-intensive. While key logistics relationships are person-dependent, the underlying scheduling and coordination processes are well-documented enough to transfer. The talent risk here is moderate rather than severe.' },
+      { score: 2, explanation: 'Automated procurement and scheduling systems have removed human judgment from ordering and replenishment decisions. When those systems encounter conditions outside their historical parameters — which a major supply disruption will create — they may continue placing orders that cannot be fulfilled, or fail to escalate problems that require human intervention.' }
+    ]
+  },
+  {
+    id: 'storage',
+    name: 'Efficient storage of materials',
+    group: 'supply',
+    investment: 'mid',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Storage capability is adequately managed and reasonably efficient. The baseline risk is that optimisation for storage cost has reduced buffer inventory to levels that provide limited resilience against supply volatility. The capability is operationally sound but strategically thin.' },
+      { score: 3, explanation: 'Climate-controlled and refrigerated storage is directly energy-intensive. A sustained energy price spike dramatically increases the operating cost of cold chain storage — and in a worst case, creates availability and safety risks if power becomes intermittent. The organisation has likely not modelled the cost and operational implications of running cold storage under high-energy-cost conditions.' },
+      { score: 2, explanation: 'If key materials become harder to source due to supply chain fragmentation, the strategic importance of storage increases: higher buffer inventory becomes a competitive advantage. But this requires capital and space that have been systematically reduced in pursuit of efficiency. Converting from a lean to a buffer storage strategy is not something that can be done quickly.' },
+      { score: 1, explanation: 'Storage operations rely on well-defined procedures that transfer reasonably well between staff. The talent risk is moderate: specialised equipment operators and cold chain managers may be in short supply in the labour market, but the operational knowledge itself is not deeply tacit.' },
+      { score: 2, explanation: 'Warehouse management systems, automated inventory tracking, and RFID-based location management have streamlined storage operations but created platform dependencies. If the WMS vendor changes terms or the system requires significant changes to accommodate a new storage model, the organisation will find that manual fallback procedures no longer exist.' }
+    ]
+  },
+  {
+    id: 'waste',
+    name: 'Process waste sustainably',
+    group: 'supply',
+    investment: 'low',
+    differentiating: true,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Sustainable waste processing is a differentiating capability that is currently functional. The baseline risk is that it is positioned as a brand asset without the operational rigour to withstand scrutiny — certification is maintained but the underlying processes have not kept pace with evolving sustainability standards.' },
+      { score: 2, explanation: 'Waste processing itself consumes energy — particularly thermal treatment, compaction, and transportation to processing facilities. A sustained energy spike increases the operational cost of maintaining sustainable waste standards and may create pressure to revert to lower-cost, less sustainable alternatives. This is a reputational as well as operational risk.' },
+      { score: 2, explanation: 'Sustainable waste processing often depends on specialist third-party processors and recycling partners. Supply chain fragmentation may reduce access to preferred partners or increase their costs, threatening the sustainability certifications and standards that underpin the differentiating claim.' },
+      { score: 2, explanation: 'Environmental compliance knowledge and sustainability reporting expertise are concentrated in a small specialist team. Their departure would create both operational gaps in maintaining current standards and reputational risk from the inability to accurately report on sustainability performance.' },
+      { score: 2, explanation: 'Waste reporting and sustainability tracking are increasingly automated and integrated into compliance platforms. These systems are relatively new, not deeply embedded, and could be changed without significant disruption. The automation lock-in risk is lower here than in core operational capabilities.' }
+    ]
+  },
+
+  /* ────────────────────────── GROUP 3: RUN THE FACTORY ─────── */
+  {
+    id: 'planning-scheduling',
+    name: 'Planning and scheduling',
+    group: 'factory',
+    investment: 'mid',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Production planning and scheduling is competently executed. The baseline risk is over-optimisation for a single, stable supply and demand pattern — scheduling systems and planners who are not exercised in handling significant variability may struggle when conditions shift.' },
+      { score: 2, explanation: 'Energy cost variability complicates production scheduling directly: if energy is cheapest during off-peak hours, shifting production requires planning flexibility that may not exist. If fuel costs affect inbound materials delivery timing, scheduling assumptions built on reliable delivery windows become invalid.' },
+      { score: 2, explanation: 'Supply chain fragmentation creates delivery uncertainty that destabilises fixed production schedules. The ability to replanning quickly when materials arrive late or from alternative sources is a planning capability that has typically not been exercised. The organisation will discover that its scheduling tools assume a stability that no longer exists.' },
+      { score: 2, explanation: 'Production planning expertise — particularly the judgment required to balance competing constraints, manage exceptions, and make rapid rescheduling decisions — is often concentrated in a small number of experienced planners. Their departure leaves newer planners with tools they can operate but without the judgment to navigate non-standard situations.' },
+      { score: 3, explanation: 'Scheduling and production planning are among the most thoroughly automated capabilities in manufacturing. ERP-driven scheduling systems now make decisions at a speed and complexity that humans cannot follow in real time. When conditions fall outside the system\'s historical parameters, human operators may not be equipped to intervene effectively — they have lost the manual planning skills that were automated away.' }
+    ]
+  },
+  {
+    id: 'equipment-availability',
+    name: 'Maintain availability of equipment',
+    group: 'factory',
+    investment: 'low',
+    differentiating: true,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 2, explanation: 'Equipment maintenance is a differentiating capability that is currently underfunded relative to its strategic importance. Preventive maintenance schedules are often deferred in favour of production output, creating an accumulating risk of unplanned downtime that is not visible until a critical failure occurs.' },
+      { score: 3, explanation: 'Maintenance operations are energy-intensive — calibration equipment, testing rigs, and the production equipment itself all depend on reliable power. More critically, spare parts sourcing and specialist maintenance contractors often involve significant logistics and travel. Energy cost spikes make the existing maintenance model more expensive and, in some cases, operationally impractical.' },
+      { score: 2, explanation: 'Spare parts for specialised production equipment are often sourced from specific manufacturers in specific regions. Supply chain fragmentation may disrupt access to those parts, extending equipment downtime and forcing substitution with lower-quality alternatives. The organisation likely has minimal strategic spare parts inventory.' },
+      { score: 3, explanation: 'Equipment maintenance knowledge is among the most tacitly held in any manufacturing organisation. Experienced technicians develop a feel for equipment behaviour — sounds, vibrations, and operating patterns — that signals problems before they become failures. This knowledge does not transfer through documentation; it transfers through apprenticeship. As experienced technicians retire, this early warning system degrades.' },
+      { score: 2, explanation: 'Predictive maintenance systems, IoT sensors, and condition monitoring platforms have improved equipment management but created a new dependency: the organisation now relies on these systems to detect problems that technicians previously found through direct inspection. When the sensors miss something, there is no human backup competence to catch it.' }
+    ]
+  },
+  {
+    id: 'manufacture',
+    name: 'Manufacture the products',
+    group: 'factory',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 2, explanation: 'Production operations are functional but under-invested in resilience. The baseline risk is that output targets are consistently prioritised over process improvement, creating a manufacturing capability that is efficient under standard conditions but brittle under non-standard ones.' },
+      { score: 3, explanation: 'Manufacturing is directly energy-dependent. Production lines, heating and cooling systems, compressed air systems, and materials handling all consume significant energy. A sustained price spike increases unit production costs immediately, and a supply interruption could force production curtailment. Few facilities have tested energy reduction protocols that would allow continued output at reduced energy consumption.' },
+      { score: 2, explanation: 'Raw material sourcing from fragmented supply chains increases input costs and creates material substitution challenges. Some product formulations or specifications may depend on materials available only from affected regions, requiring reformulation — a process that involves regulatory approval, quality testing, and customer communication.' },
+      { score: 2, explanation: 'Production workforce skills vary considerably by product line and process type. Specialised manufacturing processes — particularly those involving custom tooling, calibration, or precision operations — are vulnerable to skill loss when experienced operators retire. Standard production lines are less exposed.' },
+      { score: 3, explanation: 'Highly automated production lines, while efficient, have progressively eliminated the operator discretion and manual intervention capabilities that were once central to manufacturing resilience. When automated systems encounter unusual material inputs, unexpected environmental conditions, or off-spec situations, the human capacity to intervene effectively has been trained out of the workforce.' }
+    ]
+  },
+  {
+    id: 'quality',
+    name: 'Assure quality of the products',
+    group: 'factory',
+    investment: 'mid',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Quality assurance is adequately staffed and procedurally sound. The baseline risk is that quality systems have been designed around known inputs and established processes — variability in raw materials, new suppliers, or process changes creates quality failures that the existing system is slow to detect and respond to.' },
+      { score: 1, explanation: 'Quality assurance is not materially energy-dependent. Laboratory equipment and testing facilities consume relatively modest amounts of energy compared to production. The indirect risk is that energy-driven input cost pressure incentivises specification compromise, creating quality problems that the QA system then has to manage.' },
+      { score: 2, explanation: 'When alternative suppliers are introduced due to supply fragmentation, incoming material quality may differ from established specifications. Quality assurance processes calibrated to known supplier profiles may not detect these differences quickly. The risk of an out-of-specification product reaching customers increases during the transition to alternative supply sources.' },
+      { score: 3, explanation: 'Quality assurance expertise is deeply experiential. Senior QA professionals hold decades of product and process knowledge that enables rapid diagnosis of root causes when quality deviates. This knowledge is extremely difficult to document comprehensively. When those individuals retire, quality investigations take longer and produce less reliable conclusions.' },
+      { score: 2, explanation: 'Automated quality inspection systems — vision systems, automated sampling, and statistical process control platforms — can miss failure modes they were not trained to detect. As production processes evolve, automated QA systems that are not continually recalibrated drift out of alignment with actual quality risk, creating blind spots that only skilled human inspection would catch.' }
+    ]
+  },
+
+  /* ────────────────────── GROUP 4: CUSTOMER EXPERIENCE ──────── */
+  {
+    id: 'sell',
+    name: 'Sell products',
+    group: 'customer',
+    investment: 'high',
+    differentiating: true,
+    criticalBaseline: true,
+    scenarios: [
+      { score: 3, explanation: 'Sales capability is the most significant baseline fragility in this organisation. The sales methodology — how to open accounts, build relationships, navigate objections, and close in the specific context of this business — lives largely in the heads of the top performers. There is no documented playbook, no structured coaching programme, and no systematic way to develop new talent to the same level. Revenue is concentrated in capabilities that have not been made transferable.' },
+      { score: 2, explanation: 'An energy-driven economic squeeze reduces customer purchasing confidence and increases price sensitivity. Sales teams that have built relationships on value and trust can navigate this; teams that depend on buoyant market conditions to close deals will struggle. The existing sales model has not been tested in a sustained customer-budget-constrained environment.' },
+      { score: 2, explanation: 'Geopolitical fragmentation may reduce access to customers in certain regions, require compliance with new trade documentation, or force restructuring of commercial terms. Sales teams operating in affected markets will face increased friction without the legal and compliance support infrastructure to move quickly.' },
+      { score: 4, explanation: 'Sales capability is the most talent-dependent function in the business. When key account managers or sales leaders with deep customer relationships retire, those relationships do not automatically transfer. Customers have loyalty to the individual, not the organisation. Without succession plans, documented account histories, and deliberate relationship transition programmes, the organisation will lose significant revenue alongside the people who generate it.' },
+      { score: 2, explanation: 'CRM tools have standardised pipeline management and reporting but have not made the sales process itself more transferable. The organisation may believe it has sales process visibility because it has a CRM, while the actual selling skill remains as tacit and person-dependent as ever. The automation has created the appearance of process without its substance.' }
+    ]
+  },
+  {
+    id: 'process-orders',
+    name: 'Process orders',
+    group: 'customer',
+    investment: 'high',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Order processing is well-resourced, largely automated, and operationally reliable. The baseline risk is a lack of exception-handling capacity: when orders fall outside the standard parameters — unusual quantities, custom specifications, credit edge cases — resolution is slow and depends on specific individuals rather than clear escalation processes.' },
+      { score: 1, explanation: 'Order processing systems are not energy-sensitive beyond standard IT infrastructure resilience. The indirect risk is that energy-driven supply constraints create more order exceptions, increasing the load on exception-handling processes that are already a weakness.' },
+      { score: 2, explanation: 'Cross-border orders become more complex under geopolitical fragmentation: export licensing, customs documentation, sanctions screening, and currency conversion requirements all increase. Order processing systems built for open trade will require significant reconfiguration to handle the new compliance overhead of a fragmented trade environment.' },
+      { score: 1, explanation: 'Order processing is a well-documented, procedurally defined capability that transfers reasonably well between personnel. The talent risk is low compared to more judgment-intensive functions. Standard operating procedures and system-enforced workflows provide meaningful resilience against individual departures.' },
+      { score: 3, explanation: 'Order processing is among the most fully automated commercial capabilities. The organisation has removed most human touchpoints from the standard order-to-cash flow. When the automation encounters a scenario it was not designed for — a new product type, a new commercial model, a new market — the absence of human process knowledge means adaptation is slow, expensive, and dependent on vendor involvement.' }
+    ]
+  },
+  {
+    id: 'service-customer',
+    name: 'Service the customer',
+    group: 'customer',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 2, explanation: 'Customer service is under-resourced relative to customer expectations. Resolution times are adequate for routine issues but slow for complex ones. The baseline risk is that as the product or customer base grows in complexity, the service capability does not scale — and the quality gap widens into a churn driver.' },
+      { score: 1, explanation: 'Customer service is not directly exposed to energy scarcity. If economic pressure from energy costs makes customers more price-sensitive and likely to seek alternatives, service quality becomes a more important retention mechanism — but the capability itself is not at risk.' },
+      { score: 2, explanation: 'Cross-border service complexity increases under fragmentation: customers in affected regions may have different regulatory requirements, different commercial terms, and different language and cultural expectations. The current service model is not structured to handle this kind of per-region variation at scale.' },
+      { score: 3, explanation: 'Customer service quality depends heavily on the judgment and product knowledge of experienced service staff. Long-tenure service representatives understand product history, common failure modes, and how to navigate the organisation to solve unusual problems quickly. When they leave, issue resolution quality drops and escalation rates rise — often before the organisation recognises what has changed.' },
+      { score: 2, explanation: 'Customer-facing chatbots and automated service flows handle standard queries adequately but create a frustrating experience for complex issues. The organisation may have removed or reduced its skilled human service layer in response to automation-driven efficiency targets, leaving customers with no good pathway when the automation reaches its limits.' }
+    ]
+  },
+  {
+    id: 'rd',
+    name: 'Research and develop new products',
+    group: 'customer',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 2, explanation: 'R&D is underfunded relative to the competitive environment. The pipeline of new products is thin, development cycles are slow, and the function has not developed systematic processes for identifying and prioritising customer needs. This is a strategic fragility that constrains the organisation\'s ability to renew its proposition over time.' },
+      { score: 1, explanation: 'R&D is not significantly exposed to energy scarcity directly. If energy costs change what customers value — creating demand for more energy-efficient products, for example — R&D will need to redirect its focus, but the capability to do so is not itself energy-dependent.' },
+      { score: 2, explanation: 'Material availability constraints from supply chain fragmentation may limit the inputs available for new product development. If preferred materials become inaccessible, reformulation may be required — which extends development timelines and consumes R&D capacity at the expense of genuine innovation.' },
+      { score: 4, explanation: 'R&D knowledge is among the most tacitly held in any organisation. Scientists and engineers accumulate deep understanding of what has been tried, why it failed, what the product is actually capable of, and where the unexplored opportunities lie. This knowledge is almost never fully documented. When key researchers or product developers retire, entire lines of enquiry are lost — not because the work was not done, but because no one remaining knows it was done or what was learned.' },
+      { score: 3, explanation: 'R&D toolchains — simulation software, lab information management systems, formulation databases, and testing platforms — have become deeply embedded in the development process. Switching costs are high, and the data created in these systems is often not fully portable. If a vendor discontinues a product or pivots its roadmap, the R&D function may find itself dependent on a platform it cannot easily replace or migrate away from.' }
+    ]
+  },
+
+  /* ─────────────────────────── ENABLING ROW ──────────────────── */
+  {
+    id: 'financial-mgmt',
+    name: 'Financial management',
+    group: 'enabling',
+    investment: 'high',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Financial management is well-resourced and reliably executed. The baseline risk is that financial reporting and planning are designed for stable operating conditions — the management information provided does not give leadership adequate early warning of emerging cost or revenue risks before they become material.' },
+      { score: 2, explanation: 'Energy cost volatility creates immediate pressure on financial management: budgets become stale quickly, cost forecasts require frequent revision, and energy-indexed contracts create P&L variability that may not have been modelled. Treasury and hedging capabilities become more important under sustained energy price uncertainty.' },
+      { score: 2, explanation: 'Currency volatility, trade friction costs, and the financial complexity of restructuring supplier and customer relationships across newly separated trade blocs all increase the workload and complexity of financial management significantly. Transfer pricing, cross-border cash management, and sanctions compliance create new technical demands.' },
+      { score: 1, explanation: 'Financial management processes are well-documented and transfer effectively between personnel. The talent risk is lower here than in more judgment-intensive or relationship-dependent functions. ERP systems provide meaningful structural continuity independent of individual departures.' },
+      { score: 2, explanation: 'Financial systems — ERP, consolidation platforms, treasury management tools — are deeply embedded and highly interconnected. Changing any part of the system landscape is expensive and disruptive. This creates a situation where the organisation maintains sub-optimal financial processes because the cost of change is too high, rather than because the processes are the best available.' }
+    ]
+  },
+  {
+    id: 'recruit-talent',
+    name: 'Recruit and maintain talent',
+    group: 'enabling',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 2, explanation: 'Talent acquisition and retention is under-invested. The organisation competes for talent without a distinctive employer proposition, relies on reactive recruitment rather than pipeline-building, and has not developed systematic early-career pathways to replace experienced staff over time. This creates chronic exposure to attrition risk across functions.' },
+      { score: 1, explanation: 'Talent recruitment is not significantly exposed to energy scarcity. If economic conditions from an energy shock tighten the labour market, recruitment costs may decrease temporarily — but this does not address the structural pipeline deficit.' },
+      { score: 1, explanation: 'Supply chain fragmentation has limited direct impact on talent acquisition in most markets. Indirect effects may emerge if immigration patterns change or if specific technical skills become harder to source due to altered international mobility, but this is a manageable and gradual constraint rather than an acute capability failure.' },
+      { score: 4, explanation: 'Talent acquisition and retention is the enabling capability that most directly determines the severity of the talent erosion scenario. Without investment in graduate programmes, apprenticeships, structured knowledge transfer, and compelling retention packages for mid-career professionals, the organisation has no mechanism to replace the institutional knowledge it will lose to retirement at scale.' },
+      { score: 2, explanation: 'Automated applicant tracking, AI-driven screening, and algorithmic job matching have made recruitment faster but not necessarily better. The organisation may be systematically screening out candidates with the judgment, adaptability, and tacit competence it most needs, in favour of candidates who match the keyword profiles of people who already work there.' }
+    ]
+  },
+  {
+    id: 'people-planning',
+    name: 'Plan availability of people and resources',
+    group: 'enabling',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 2, explanation: 'Workforce planning is conducted but is insufficiently forward-looking. Headcount plans extend one to two years; the capability pipeline implications of decisions made today are not visible at a five-to-ten year horizon. This creates structural shortfalls that appear suddenly but were entirely predictable years earlier.' },
+      { score: 2, explanation: 'Energy cost impacts on workforce planning are indirect but real: if energy-driven economic pressure forces restructuring or headcount reductions, workforce planning must rapidly model the capability implications of different reduction scenarios. This is an analytical demand the function has not been designed to meet under time pressure.' },
+      { score: 2, explanation: 'Workforce planning models do not typically account for geopolitical risk. If specific skill sets become unavailable due to restrictions on international mobility, or if operations in affected regions need to be restructured, the planning function will be asked to analyse scenarios it has no historical data or modelling framework to address.' },
+      { score: 3, explanation: 'Workforce planning is almost certainly not modelling the retirement wave adequately. Age distribution analysis, role-by-role succession planning, and knowledge transfer timelines are exactly the outputs this capability should produce — but they require investment, data quality, and leadership appetite that are typically absent. The function is planning for the workforce of today, not the workforce transition of the next decade.' },
+      { score: 2, explanation: 'Workforce planning tools — HR information systems, capacity planning models, skill matrix databases — provide useful structure but have become the ceiling rather than the floor of planning ambition. If the system cannot model a scenario, the scenario is not modelled. The capability has adapted to the tool rather than the tool serving the capability.' }
+    ]
+  },
+  {
+    id: 'facilities',
+    name: 'Maintain the facilities',
+    group: 'enabling',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: false,
+    scenarios: [
+      { score: 1, explanation: 'Facilities management is functional and adequately maintained. The baseline risk is that reactive maintenance has been normalised — non-urgent repairs are deferred routinely, creating an accumulated maintenance debt that will require periodic expensive interventions rather than efficient ongoing management.' },
+      { score: 3, explanation: 'Facility operating costs are dominated by energy: heating, cooling, lighting, and power for equipment. A sustained energy price spike dramatically increases facilities operating costs and may make certain facility configurations economically unsustainable. The organisation has likely not conducted an energy efficiency audit that would identify which facilities are most vulnerable and what investments could reduce exposure.' },
+      { score: 2, explanation: 'Maintenance supplies, specialist contractors, and equipment for facilities management may be affected by supply chain fragmentation if they are sourced from affected regions. This creates cost and availability risk, but alternative sourcing is generally available at the facilities level, making this a cost increase rather than a capability failure.' },
+      { score: 2, explanation: 'Experienced facilities managers hold deep knowledge of building systems, infrastructure quirks, and maintenance history. When they leave, the new team operates without that context — which means problems take longer to diagnose, contractors make decisions the in-house team would have pushed back on, and the underlying maintenance debt grows faster.' },
+      { score: 1, explanation: 'Facilities management has been partially automated through building management systems and remote monitoring. This automation is helpful but not deeply disruptive to the capability — manual override and inspection remain available. The lock-in risk is lower here than in production-critical capabilities.' }
+    ]
+  },
+  {
+    id: 'change',
+    name: 'Run change initiatives',
+    group: 'enabling',
+    investment: 'low',
+    differentiating: false,
+    criticalBaseline: true,
+    scenarios: [
+      { score: 3, explanation: 'Change management capability is chronically underfunded and has a poor track record. Initiatives consistently deliver late, under scope, or without the intended behavioural change in the organisation. This capability is foundational to responding to any of the disruption scenarios, which makes its baseline weakness a significant strategic vulnerability across all futures.' },
+      { score: 2, explanation: 'Energy scarcity requires a rapid operational response — shifting production schedules, renegotiating logistics contracts, implementing energy efficiency measures, and potentially restructuring facilities. Each of these is a change initiative. The organisation\'s ability to execute them quickly and reliably is directly constrained by the weakness in its change capability.' },
+      { score: 2, explanation: 'Supply chain fragmentation requires the organisation to change sourcing relationships, supplier qualification processes, and potentially product specifications. These are complex, cross-functional changes that will test the change management capability that is already the weakest link in the organisation\'s operational resilience.' },
+      { score: 3, explanation: 'Addressing the talent erosion scenario requires a sustained and deliberately managed change programme: new recruitment models, structured knowledge transfer, succession planning, and cultural shifts in how institutional knowledge is shared. Without effective change management capability, these initiatives will be announced but not completed.' },
+      { score: 3, explanation: 'Reversing automation lock-in is one of the most technically and organisationally complex change challenges an organisation faces. It requires simultaneously retiring legacy systems, rebuilding human competence, and managing the operational continuity risk of the transition. A change capability that struggles with straightforward initiatives is not positioned to lead this kind of fundamental transformation.' }
+    ]
+  }
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   CONSTANTS — heat rendering
+   ═══════════════════════════════════════════════════════════════ */
+
+const HEAT_CONFIG = {
+  0: { label: 'Not exposed',  bg: '#1c1c1c', accent: '#444444' },
+  1: { label: 'Low',         bg: '#162b1a', accent: '#4caf6a' },
+  2: { label: 'Moderate',    bg: '#271c00', accent: '#d4a017' },
+  3: { label: 'High',        bg: '#2e0e0e', accent: '#c94040' },
+  4: { label: 'Critical',    bg: '#4a0808', accent: '#ff4444' }
+};
+
+const INVEST_LABELS = { high: 'High', mid: 'Mid', low: 'Low' };
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════ */
+
+let activeScenario = 0;
+let activeTileId   = null;
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+
+function scoreChanged(cap, scenarioId) {
+  if (scenarioId === 0) return false;
+  return cap.scenarios[scenarioId].score !== cap.scenarios[0].score;
+}
+
+function buildTile(cap, scenarioId) {
+  const s     = cap.scenarios[scenarioId];
+  const heat  = HEAT_CONFIG[s.score];
+  const isActive = activeTileId === cap.id;
+  const changed  = scoreChanged(cap, scenarioId);
+
+  const tile = document.createElement('div');
+  tile.className = 'tile' +
+    (cap.differentiating ? ' differentiating' : '') +
+    (isActive ? ' active-tile' : '');
+  tile.dataset.heat = s.score;
+  tile.dataset.id   = cap.id;
+  tile.style.backgroundColor = heat.bg;
+  tile.setAttribute('role', 'button');
+  tile.setAttribute('tabindex', '0');
+  tile.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  if (cap.differentiating) {
+    tile.style.borderColor = '#404040';
+  }
+
+  // title attr gives full name on hover — useful when text is clamped at small sizes
+  tile.title = cap.name;
+
+  tile.innerHTML = `
+    <div class="changed-dot ${changed ? 'visible' : ''}"></div>
+    <div class="tile-name">${cap.name}</div>
+    <div class="tile-footer">
+      <span class="invest-badge ${cap.investment}">${INVEST_LABELS[cap.investment]}</span>
+    </div>
+  `;
+
+  tile.addEventListener('click', () => onTileClick(cap.id));
+  tile.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTileClick(cap.id); }
+  });
+  return tile;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER MAP
+   ═══════════════════════════════════════════════════════════════ */
+
+const GROUP_META = [
+  { key: 'market',   label: 'Market & Brand' },
+  { key: 'supply',   label: 'Supply Chain' },
+  { key: 'factory',  label: 'Run the Factory' },
+  { key: 'customer', label: 'Customer Experience' }
+];
+
+function renderMap() {
+  const sid = activeScenario;
+
+  // Governance row
+  const govRow = document.getElementById('row-governance');
+  govRow.innerHTML = '';
+  CAPABILITIES.filter(c => c.group === 'governance').forEach(cap => {
+    govRow.appendChild(buildTile(cap, sid));
+  });
+
+  // Domain grid (2x2)
+  const domGrid = document.getElementById('domain-grid');
+  domGrid.innerHTML = '';
+  GROUP_META.forEach(({ key, label }) => {
+    const group = document.createElement('div');
+    group.className = 'domain-group';
+    group.innerHTML = `<div class="domain-group-label">${label}</div>`;
+    const tilesContainer = document.createElement('div');
+    tilesContainer.className = 'domain-tiles';
+    CAPABILITIES.filter(c => c.group === key).forEach(cap => {
+      tilesContainer.appendChild(buildTile(cap, sid));
+    });
+    group.appendChild(tilesContainer);
+    domGrid.appendChild(group);
+  });
+
+  // Enabling row
+  const enRow = document.getElementById('row-enabling');
+  enRow.innerHTML = '';
+  CAPABILITIES.filter(c => c.group === 'enabling').forEach(cap => {
+    enRow.appendChild(buildTile(cap, sid));
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER SCENARIO BAR & DESCRIPTION
+   ═══════════════════════════════════════════════════════════════ */
+
+function renderScenarioBar() {
+  const bar = document.getElementById('scenario-bar');
+  bar.innerHTML = '';
+  SCENARIOS.forEach(sc => {
+    const pill = document.createElement('button');
+    pill.className = 'scenario-pill' + (sc.id === activeScenario ? ' active' : '');
+    pill.textContent = `S${sc.id} — ${sc.name}`;
+    if (sc.id === activeScenario) {
+      pill.style.background    = sc.color + '22';
+      pill.style.borderColor   = sc.color;
+      pill.style.color         = sc.color;
+    }
+    pill.addEventListener('click', () => {
+      activeScenario = sc.id;
+      renderAll();
+    });
+    bar.appendChild(pill);
+  });
+
+  const sc = SCENARIOS[activeScenario];
+  const desc = document.getElementById('scenario-desc');
+  desc.textContent = sc.description;
+  desc.style.borderLeftColor = sc.color;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DETAIL DRAWER
+   ═══════════════════════════════════════════════════════════════ */
+
+function renderDrawer() {
+  const drawer = document.getElementById('drawer');
+
+  if (!activeTileId) {
+    drawer.classList.remove('open');
+    return;
+  }
+
+  const cap  = CAPABILITIES.find(c => c.id === activeTileId);
+  const s    = cap.scenarios[activeScenario];
+  const heat = HEAT_CONFIG[s.score];
+  const sc   = SCENARIOS[activeScenario];
+
+  // Scenario context label
+  document.getElementById('drawer-scenario-label').textContent =
+    `S${sc.id} — ${sc.name}`;
+
+  document.getElementById('drawer-name').textContent = cap.name;
+
+  // Exposure badge — coloured by heat
+  const exposure = document.getElementById('drawer-exposure');
+  exposure.textContent      = heat.label;
+  exposure.style.background = heat.bg;
+  exposure.style.color      = heat.accent;
+  exposure.style.border     = `1px solid ${heat.accent}55`;
+
+  document.getElementById('drawer-explanation').textContent = s.explanation;
+
+  // Left accent border on drawer matches the scenario/heat accent
+  drawer.style.borderLeftColor = heat.accent + '99';
+
+  drawer.classList.add('open');
+  // Scroll drawer into view only if partially out of viewport
+  setTimeout(() => {
+    drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 30);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EVENT HANDLERS
+   ═══════════════════════════════════════════════════════════════ */
+
+function onTileClick(id) {
+  if (activeTileId === id) {
+    activeTileId = null;
+  } else {
+    activeTileId = id;
+  }
+  renderAll();
+}
+
+document.getElementById('drawer-close').addEventListener('click', () => {
+  activeTileId = null;
+  renderAll();
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER ALL
+   ═══════════════════════════════════════════════════════════════ */
+
+function renderAll() {
+  renderScenarioBar();
+  renderMap();
+  renderDrawer();
+}
+
+// Initial render
+renderAll();
+</script>
+</body>
+</html>
