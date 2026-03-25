@@ -26,51 +26,51 @@
 <style>
   /* ── DESIGN TOKENS ─────────────────────────────────────────── */
   :root {
-    --bg:            #0f0f0f;
-    --surface:       #1a1a1a;
-    --border:        #2a2a2a;
-    --text:          #e5e5e5;
-    --text-muted:    #888888;
-    --text-dim:      #555555;
+    --bg:            #ffffff;
+    --surface:       #f7f7f7;
+    --border:        #e2e2e2;
+    --text:          #1a1a1a;
+    --text-muted:    #666666;
+    --text-dim:      #aaaaaa;
 
-    /* Tile heat backgrounds — each step is deliberately distinct */
-    --heat-0-bg:     #1c1c1c;
-    --heat-1-bg:     #173320;
-    --heat-2-bg:     #2c1f00;
-    --heat-3-bg:     #3a1010;
-    --heat-4-bg:     #620c0c;
+    /* Tile heat backgrounds — pastel tints for legibility on white */
+    --heat-0-bg:     #f4f4f4;
+    --heat-1-bg:     #e8f5ed;
+    --heat-2-bg:     #fff8e1;
+    --heat-3-bg:     #fdecea;
+    --heat-4-bg:     #fcd9d9;
 
     /* Tile heat text accents */
-    --heat-0-accent: #555555;
-    --heat-1-accent: #52c47a;
-    --heat-2-accent: #e0a820;
-    --heat-3-accent: #d94444;
-    --heat-4-accent: #ff5555;
+    --heat-0-accent: #aaaaaa;
+    --heat-1-accent: #2e7d32;
+    --heat-2-accent: #b45309;
+    --heat-3-accent: #c62828;
+    --heat-4-accent: #b71c1c;
 
     /* Tile heat left-border accents (subtle colour stripe) */
-    --heat-0-stripe: #2a2a2a;
-    --heat-1-stripe: #2a6640;
-    --heat-2-stripe: #7a5000;
-    --heat-3-stripe: #882020;
-    --heat-4-stripe: #cc2222;
+    --heat-0-stripe: #d4d4d4;
+    --heat-1-stripe: #4caf50;
+    --heat-2-stripe: #f59e0b;
+    --heat-3-stripe: #ef5350;
+    --heat-4-stripe: #c62828;
 
     /* Scenario identity colours */
     --s0-color: #6b7280;
-    --s1-color: #f59e0b;
-    --s2-color: #3b82f6;
-    --s3-color: #a78bfa;
-    --s4-color: #22d3ee;
+    --s1-color: #d97706;
+    --s2-color: #2563eb;
+    --s3-color: #7c3aed;
+    --s4-color: #0891b2;
 
     /* Investment badge colours */
-    --invest-high-bg:   #0f2e0f;
-    --invest-high-text: #4ade80;
-    --invest-mid-bg:    #2e1f00;
-    --invest-mid-text:  #fbbf24;
-    --invest-low-bg:    #2e0f0f;
-    --invest-low-text:  #f87171;
+    --invest-high-bg:   #dcfce7;
+    --invest-high-text: #166534;
+    --invest-mid-bg:    #fef9c3;
+    --invest-mid-text:  #854d0e;
+    --invest-low-bg:    #fee2e2;
+    --invest-low-text:  #991b1b;
 
-    --tile-border-standard:      1px solid #2a2a2a;
-    --tile-border-differentiating: 2px solid #3a3a3a;
+    --tile-border-standard:      1px solid #e2e2e2;
+    --tile-border-differentiating: 2px solid #c0c0c0;
     --tile-radius: 6px;
     --tile-padding: 10px 12px;
     --transition: background-color 0.25s ease, border-color 0.25s ease;
@@ -96,7 +96,7 @@
   .page-header {
     margin-bottom: 18px;
     padding-bottom: 14px;
-    border-bottom: 1px solid #1e1e1e;
+    border-bottom: 1px solid #eeeeee;
   }
   .page-title {
     font-size: 15px;
@@ -121,8 +121,8 @@
 
   .scenario-pill {
     cursor: pointer;
-    background: #1e1e1e;
-    border: 1px solid #333;
+    background: #f4f4f4;
+    border: 1px solid #e0e0e0;
     color: var(--text-muted);
     border-radius: 20px;
     padding: 5px 14px;
@@ -132,7 +132,7 @@
     transition: background 0.15s, color 0.15s, border-color 0.15s;
     white-space: nowrap;
   }
-  .scenario-pill:hover { color: var(--text); border-color: #555; }
+  .scenario-pill:hover { color: var(--text); border-color: #aaa; background: #eee; }
   .scenario-pill.active {
     color: #fff;
     font-weight: 600;
@@ -140,12 +140,12 @@
 
   /* ── SCENARIO DESCRIPTION ────────────────────────────────────── */
   .scenario-desc {
-    background: #151515;
+    background: #f9f9f9;
     border-left: 3px solid var(--s0-color);
     border-radius: 0 4px 4px 0;
     padding: 10px 14px;
     font-size: 12.5px;
-    color: #bbb;
+    color: #555;
     line-height: 1.6;
     margin-bottom: 16px;
     transition: border-color 0.2s;
@@ -178,8 +178,8 @@
   }
 
   .domain-group {
-    background: #131313;
-    border: 1px solid #202020;
+    background: #f7f7f7;
+    border: 1px solid #e8e8e8;
     border-radius: 8px;
     padding: 8px;
   }
@@ -189,7 +189,7 @@
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #4a4a4a;
+    color: #999;
     margin-bottom: 6px;
     padding-left: 2px;
   }
@@ -289,8 +289,8 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #ffffff;
-    border: 1.5px solid #0f0f0f;
+    background: #333333;
+    border: 1.5px solid #ffffff;
     display: none;
     z-index: 1;
   }
@@ -299,9 +299,9 @@
   /* ── DETAIL DRAWER ───────────────────────────────────────────── */
   .drawer {
     display: none;
-    background: #141414;
-    border: 1px solid #2a2a2a;
-    border-left: 4px solid #333;  /* overridden by JS with heat accent */
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid #ccc;  /* overridden by JS with heat accent */
     border-radius: 6px;
     padding: 18px 20px;
     margin-top: 10px;
@@ -368,9 +368,9 @@
 
   .drawer-explanation {
     font-size: 13px;
-    color: #c8c8c8;
+    color: #444;
     line-height: 1.7;
-    border-top: 1px solid #222;
+    border-top: 1px solid #e8e8e8;
     padding-top: 12px;
   }
 
@@ -381,7 +381,7 @@
     gap: 16px;
     margin-top: 16px;
     padding-top: 14px;
-    border-top: 1px solid #222;
+    border-top: 1px solid #e8e8e8;
     align-items: center;
   }
 
@@ -427,7 +427,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #fff;
+    background: #333;
     flex-shrink: 0;
   }
 
@@ -435,7 +435,7 @@
     width: 24px;
     height: 14px;
     border-radius: 3px;
-    border: 1px solid #3a3a3a;
+    border: 1px solid #c0c0c0;
     background: transparent;
   }
 
@@ -443,7 +443,7 @@
     width: 24px;
     height: 14px;
     border-radius: 3px;
-    border: 2px solid #5a5a5a;
+    border: 2px solid #888;
     background: transparent;
   }
 
@@ -994,11 +994,11 @@ const CAPABILITIES = [
    ═══════════════════════════════════════════════════════════════ */
 
 const HEAT_CONFIG = {
-  0: { label: 'Not exposed',  bg: '#1c1c1c', accent: '#444444' },
-  1: { label: 'Low',         bg: '#162b1a', accent: '#4caf6a' },
-  2: { label: 'Moderate',    bg: '#271c00', accent: '#d4a017' },
-  3: { label: 'High',        bg: '#2e0e0e', accent: '#c94040' },
-  4: { label: 'Critical',    bg: '#4a0808', accent: '#ff4444' }
+  0: { label: 'Not exposed',  bg: '#f4f4f4', accent: '#888888' },
+  1: { label: 'Low',         bg: '#e8f5ed', accent: '#2e7d32' },
+  2: { label: 'Moderate',    bg: '#fff8e1', accent: '#b45309' },
+  3: { label: 'High',        bg: '#fdecea', accent: '#c62828' },
+  4: { label: 'Critical',    bg: '#fcd9d9', accent: '#b71c1c' }
 };
 
 const INVEST_LABELS = { high: 'High', mid: 'Mid', low: 'Low' };
